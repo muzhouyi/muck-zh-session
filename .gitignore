@@ -1,0 +1,6 @@
+*.dll
+*.log
+*.mucksave*
+Saves/
+.muck-*-backups/
+*.pending-*
