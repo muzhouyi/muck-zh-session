@@ -8,7 +8,7 @@ foreach($entry in @($manifestData)|Where-Object {$_.Path -in @('BepInEx\plugins\
 $logPath=Join-Path $GameDir 'BepInEx\LogOutput.log'
 if(-not(Test-Path -LiteralPath $logPath)){throw 'Start Muck once to produce the startup log.'}
 $log=[IO.File]::ReadAllText($logPath)
-if($log -notmatch 'Loaded MuckSaveGame 0\.9\.3 session edition!' -or $log -notmatch 'Loading \[UU9 Muck Translater 1\.0\.2\]' -or $log -notmatch 'Chainloader startup complete'){throw 'Expected mod startup not confirmed in the current log.'}
+if($log -notmatch 'Loaded MuckSaveGame 0\.9\.4 session edition!' -or $log -notmatch 'Loading \[UU9 Muck Translater 1\.0\.2\]' -or $log -notmatch 'Chainloader startup complete'){throw 'Expected mod startup not confirmed in the current log.'}
 $errors=@($log -split '\r?\n'|Where-Object {$_ -match '\[(Error|Fatal)\s*:(MuckSaveGame|UU9 Muck)'})
 if($errors.Count){$errors;throw 'A mod error is present; inspect before continuing.'}
 Write-Output 'Installed DLL hashes and startup verified. Actual two-computer coop still needs the checklist in README.'

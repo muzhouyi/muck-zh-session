@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-Add-Type -Path @((Join-Path $PSScriptRoot 'AtomicSaveFile.cs'), (Join-Path $PSScriptRoot 'SnapshotGate.cs'), (Join-Path $PSScriptRoot 'LobbySyncState.cs'))
+Add-Type -Path @((Join-Path $PSScriptRoot 'AtomicSaveFile.cs'), (Join-Path $PSScriptRoot 'SnapshotGate.cs'), (Join-Path $PSScriptRoot 'LobbySyncState.cs'), (Join-Path $PSScriptRoot 'PeerProtocolRegistry.cs'), (Join-Path $PSScriptRoot 'NameplatePlacement.cs'))
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('muck-session-tests-' + [Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($tempRoot) | Out-Null
 $script:count = 0
@@ -49,6 +49,44 @@ Assert ($sync.ShouldNotify('different-peer', 34)) 'Successful compatibility clea
 $sync.Reset()
 $sync.PublishIfDue(200, 34, $publish)
 Assert ($script:published -eq 5) 'Scene/session reset allows immediate publication'
+$registry=[MuckSaveGame.PeerProtocolRegistry]::new()
+$connection=[object]::new()
+$reconnected=[object]::new()
+Assert (-not $registry.Verified(1,42,$connection,'0.9.2')) 'Unconfirmed peer is not trusted'
+$registry.Confirm(1,42,$connection,'0.9.2')
+Assert ($registry.Verified(1,42,$connection,'0.9.2')) 'Connection confirmed from the peer handshake'
+# Lobby data is now absent. This same connection must retain its previously verified protocol.
+Assert ($registry.Verified(1,42,$connection,'0.9.2')) 'Loss of lobby metadata does not revoke a live verified connection'
+Assert (-not $registry.Verified(1,99,$connection,'0.9.2')) 'Another Steam account cannot inherit a peer proof'
+Assert (-not $registry.Verified(1,42,$reconnected,'0.9.2')) 'A reconnect must confirm again'
+Assert (-not $registry.Verified(2,42,$connection,'0.9.2')) 'Another client slot cannot inherit the proof'
+Assert (-not $registry.Verified(1,42,$connection,'0.9.1')) 'Incompatible wire version stays blocked'
+$registry.Confirm(1,42,$reconnected,'0.9.2')
+Assert ($registry.Verified(1,42,$reconnected,'0.9.2')) 'Reconnect can confirm a fresh proof'
+Assert (-not $registry.Verified(1,42,$connection,'0.9.2')) 'Old connection proof cannot be reused after reconnect'
+$hello=[MuckSaveGame.PeerProtocolRegistry]::Hello('0.9.2')
+Assert ([MuckSaveGame.PeerProtocolRegistry]::ParseHello($hello) -eq '0.9.2') 'Handshake bytes roundtrip'
+Assert ($null -eq [MuckSaveGame.PeerProtocolRegistry]::ParseHello([Text.Encoding]::ASCII.GetBytes('other-packet'))) 'Unrelated packets are ignored'
+Assert ($null -eq [MuckSaveGame.PeerProtocolRegistry]::ParseHello([Text.Encoding]::ASCII.GetBytes('MuckSession/1/0.9.2x'))) 'Malformed version strings are ignored'
+Assert ($null -eq [MuckSaveGame.PeerProtocolRegistry]::ParseHello([byte[]]::new(100))) 'Oversized packets are ignored'
+$registry.Clear()
+Assert (-not $registry.Verified(1,42,$reconnected,'0.9.2')) 'Returning to menu clears peer proofs'
+$point=[MuckSaveGame.NameplatePlacement]::Place(500,350,10,1000,700,100,40)
+Assert (-not $point.Edge -and $point.X -eq 500 -and $point.Y -eq 350) 'Visible teammates stay at their projected heads'
+$point=[MuckSaveGame.NameplatePlacement]::Place(1200,350,10,1000,700,100,40)
+Assert ($point.Edge -and $point.X -eq 900 -and $point.Arrow -eq '→') 'Right off-screen teammate gets a right edge marker'
+$point=[MuckSaveGame.NameplatePlacement]::Place(-200,350,10,1000,700,100,40)
+Assert ($point.Edge -and $point.X -eq 100 -and $point.Arrow -eq '←') 'Left marker remains on screen'
+$point=[MuckSaveGame.NameplatePlacement]::Place(500,900,10,1000,700,100,40)
+Assert ($point.Edge -and $point.Y -eq 660 -and $point.Arrow -eq '↑') 'Top edge keeps the full nameplate visible'
+$point=[MuckSaveGame.NameplatePlacement]::Place(500,350,-10,1000,700,100,40)
+Assert ($point.Edge -and $point.Y -eq 40 -and $point.Arrow -eq '↓') 'Directly behind teammate gets a stable rear direction'
+$point=[MuckSaveGame.NameplatePlacement]::Place(700,350,-10,1000,700,100,40)
+Assert ($point.Edge -and $point.X -eq 100 -and $point.Arrow -eq '←') 'Rear projection is inverted correctly'
+$point=[MuckSaveGame.NameplatePlacement]::Place(2000,1500,10,1000,700,100,40)
+Assert ($point.X -ge 100 -and $point.X -le 900 -and $point.Y -ge 40 -and $point.Y -le 660) 'Diagonal markers do not overflow the screen'
+$point=[MuckSaveGame.NameplatePlacement]::Place(400,600,-1,320,180,200,100)
+Assert ($point.X -ge 0 -and $point.X -le 320 -and $point.Y -ge 0 -and $point.Y -le 180) 'Small-window markers stay within bounds'
 $path = Join-Path $tempRoot 'test.mucksave'
 [MuckSaveGame.AtomicSaveFile]::Write($path, [Action[IO.Stream]]{param($s) $b=[Text.Encoding]::UTF8.GetBytes('first'); $s.Write($b,0,$b.Length)})
 Assert ([IO.File]::ReadAllText($path) -eq 'first') 'First save written'
