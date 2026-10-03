@@ -65,6 +65,8 @@ public class SessionSmoke : BaseUnityPlugin
             { menu.StartLobby(); phase = 1; }
             else if ((phase == 1 || phase == 6) && menu && SteamLobby.Instance && Lobby.Id.Value != 0 && Server.clients.ContainsKey(0) && Server.clients[0].player != null && menu.lobbyUi.activeInHierarchy)
             {
+                if (SteamManager.Instance.currentLobby.GetMemberData(new Steamworks.Friend(Steamworks.SteamClient.SteamId), "muck-session-version") != SessionControl.ProtocolVersion) return;
+                Check(true, "current SteamManager room marker published by Update");
                 Lobby.SetPrivate();
                 LobbySettings.Instance.seed.text = "-20300123";
                 UIManager.useAutoSave = false;

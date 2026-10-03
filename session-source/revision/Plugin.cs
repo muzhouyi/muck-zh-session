@@ -10,7 +10,7 @@ namespace MuckSaveGame
 	using System.Reflection;
 	using System.Xml;
 	using UnityEngine;
-	[BepInPlugin("MuckSaveGame.MichMcb", "MuckSaveGame + Session", "0.9.2")]
+	[BepInPlugin("MuckSaveGame.MichMcb", "MuckSaveGame + Session", "0.9.3")]
 	[BepInIncompatibility("flarfo.saveutility")]
 	public class Plugin : BaseUnityPlugin
 	{
@@ -46,7 +46,7 @@ namespace MuckSaveGame
 
 			SaveSystem.MigrateOldSaves();
 
-			Logger.LogInfo("Loaded MuckSaveGame 0.9.2 session edition! F7 save, F8 host pause.");
+			Logger.LogInfo("Loaded MuckSaveGame 0.9.3 session edition! F7 save, F8 host pause.");
 
 			AssetBundle assetBundle = GetAssetBundleFromResource("MuckSaveGameAssets");
 

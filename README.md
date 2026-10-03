@@ -1,6 +1,6 @@
 # Muck 汉化与联机存档暂停
 
-为 Windows Steam 版 Muck 提供中文界面、保存继续和房主联机暂停。**项目发布版本：v1.0**；内部汉化插件为 1.0.2，存档插件为修订版 0.9.2。
+为 Windows Steam 版 Muck 提供中文界面、保存继续和房主联机暂停。**项目发布版本：v1.1**；内部汉化插件为 1.0.2，存档插件为修订版 0.9.3。
 
 ## 功能
 
@@ -8,9 +8,15 @@
 - 房主 F7 存档；退出后由原房主建房，在大厅读取存档继续。
 - 房主 F8 暂停整局，再按继续；支持每日自动存档与上一份存档备份。
 
+## 最近更新
+
+修复加入房间后误判队友未装模组，加入标记重试与提示限频。
+
+[更新记录](CHANGELOG.md)：v1.0 / v1.1 分别对应存档插件 0.9.2 / 0.9.3。汉化插件保持 1.0.2。
+
 ## 安装
 
-1. 在 [v1.0 Release](https://github.com/muzhouyi/muck-zh-session/releases/tag/v1.0) 下载 `Muck-zh-session-v1.0.zip`，完整解压。
+1. 在 [v1.1 Release](https://github.com/muzhouyi/muck-zh-session/releases/tag/v1.1) 下载 `Muck-zh-session-v1.1.zip`，完整解压。
 2. 所有人关闭 Muck，安装同一个包。让 Agent 阅读《给Agent的交接说明.md》，或在 Windows PowerShell 中运行：
 
 ```powershell
@@ -20,6 +26,8 @@
 ```
 
 安装器保留无关模组并备份文件。已验证版本为 Muck 1.3 / Steam Build 7077400；版本不符或发现冲突会停止。详细使用、恢复与构建方法见 [使用说明](README-先读我.md)和 [交接说明](给Agent的交接说明.md)。仓库中的源码不包含加载器二进制；安装和源码构建请使用完整 Release 包。
+
+已装旧版：下载同页的 `Muck-zh-session-v1.1-update.zip`，关闭游戏并备份旧 DLL 后，替换 `BepInEx/plugins/MuckSaveGame.dll`。双方都要更新并重启，备份不要留在 plugins 内；保留原 Saves 和汉化文件。
 
 ## 引用与修改
 

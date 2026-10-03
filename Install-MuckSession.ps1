@@ -105,7 +105,7 @@ if ($DryRun) { $plan.Path; Write-Output 'Dry run complete. No files changed.'; r
 $backupRoot = Join-Path $GameDir ('.muck-zh-backups\' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Path $backupRoot -Force | Out-Null
 $records = @()
-$history = [ordered]@{ PackageVersion = '0.9.2-session-with-zh-1.0.2'; GameDir = $GameDir; InstalledAt = (Get-Date).ToString('o'); Completed = $false; Files = @() }
+$history = [ordered]@{ PackageVersion = '0.9.3-session-with-zh-1.0.2'; GameDir = $GameDir; InstalledAt = (Get-Date).ToString('o'); Completed = $false; Files = @() }
 $stateFile = Join-Path $backupRoot 'installation.json'
 try {
     foreach ($entry in $plan) {
@@ -144,6 +144,6 @@ try {
     $history | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $stateFile -Encoding UTF8
     throw $failure
 }
-Write-Output 'Installed Chinese 1.0.2 and personal session edition 0.9.2. Both players need this exact package. Start Muck through Steam, then run Verify-MuckSession.ps1.'
+Write-Output 'Installed Chinese 1.0.2 and personal session edition 0.9.3. Both players need this exact package. Start Muck through Steam, then run Verify-MuckSession.ps1.'
 Write-Output "Backup directory: $backupRoot"
 Write-Output 'Host F7 saves; host F8 pauses/resumes the group. F5 reloads Chinese; F6 toggles language. Restart after installation.'

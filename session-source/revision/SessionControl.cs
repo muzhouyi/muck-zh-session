@@ -3,7 +3,6 @@ namespace MuckSaveGame
     using HarmonyLib;
     using System;
     using System.Collections.Generic;
-    using System.Reflection;
     using Steamworks;
     using UnityEngine;
 
@@ -18,25 +17,51 @@ namespace MuckSaveGame
         private static readonly HashSet<int> restored = new HashSet<int>();
         private static float priorScale = 1f;
         private static float nextBroadcast;
+        public const string ProtocolVersion = "0.9.2";
+        private static readonly LobbySyncState lobbySync = new LobbySyncState();
         private static Steamworks.Data.Lobby CurrentLobby
         {
-            get { return (Steamworks.Data.Lobby)typeof(SteamLobby).GetField("currentLobby", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).GetValue(SteamLobby.Instance); }
+            get { return SteamManager.Instance.currentLobby; }
         }
-        [HarmonyPatch(typeof(SteamLobby), "InitLobby"), HarmonyPostfix]
         private static void AdvertiseVersion()
-        { CurrentLobby.SetMemberData("muck-session-version", "0.9.2"); }
+        {
+            if (!SteamManager.Instance) return;
+            var current = CurrentLobby;
+            try
+            {
+                lobbySync.PublishIfDue(current.Id.Value, Time.realtimeSinceStartup,
+                    () => current.SetMemberData("muck-session-version", ProtocolVersion));
+            }
+            catch (Exception ex)
+            {
+                if (lobbySync.ShouldNotify("metadata-error", Time.realtimeSinceStartup)) Plugin.Log.LogWarning("Version marker publishing will retry: " + ex.Message);
+            }
+        }
+        private static void CompatibilityNotice(string message)
+        {
+            if (lobbySync.ShouldNotify(message, Time.realtimeSinceStartup)) Say(message);
+        }
         private static bool CompatiblePeers()
         {
             foreach (var pair in Server.clients)
             {
                 if (pair.Value == null || pair.Value.player == null || pair.Key == LocalClient.instance.myId) continue;
-                if (NetworkController.Instance.networkType == NetworkController.NetworkType.Classic ||
-                    CurrentLobby.GetMemberData(new Friend(pair.Value.player.steamId), "muck-session-version") != "0.9.2")
+                if (NetworkController.Instance.networkType == NetworkController.NetworkType.Classic)
                 {
-                    Say("请先让所有队友安装同版本的联机存档暂停包（0.9.2），然后重新创建房间。");
+                    CompatibilityNotice("联机存档暂停目前仅支持 Steam 房间。");
+                    return false;
+                }
+                string marker = CurrentLobby.GetMemberData(new Friend(pair.Value.player.steamId), "muck-session-version");
+                if (marker != ProtocolVersion)
+                {
+                    string name = pair.Value.player.username.Replace("<", "＜").Replace(">", "＞");
+                    CompatibilityNotice(string.IsNullOrEmpty(marker)
+                        ? "尚未收到队友「" + name + "」的模组标记。请双方使用修复版 0.9.3；刚加入时稍等几秒再试。"
+                        : "队友「" + name + "」的模组通信版本不一致，请双方更新为修复版 0.9.3。");
                     return false;
                 }
             }
+            lobbySync.ClearNotice();
             return true;
         }
         public static void Say(string message)
@@ -67,6 +92,7 @@ namespace MuckSaveGame
         }
         public static void Tick()
         {
+            AdvertiseVersion();
             if (GameManager.state != GameManager.GameState.Playing) return;
             if (!LocalClient.serverOwner && LoadManager.serverHasSaveLoaded && !readySent &&
                 LocalClient.instance && GameManager.players.ContainsKey(LocalClient.instance.myId) &&
@@ -142,6 +168,7 @@ namespace MuckSaveGame
         public static void Reset()
         {
             EndSave(); readySent = false; pendingReady.Clear(); restored.Clear();
+            lobbySync.Reset();
             if (Paused) { Paused = false; Time.timeScale = priorScale > 0f ? priorScale : 1f; }
         }
     }
