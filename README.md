@@ -1,10 +1,10 @@
 # Muck 汉化与联机便利补丁
 
-为 Windows Steam Muck 提供汉化、保存继续、联机暂停、回家与资源导航、队友提示、共用容器和死亡保留物品。当前版本 **v1.4.2**。
+为 Windows Steam Muck 提供汉化、保存继续、联机暂停、回家与资源导航、队友提示、共用容器和死亡保留物品。当前版本 **v1.5**。
 
 ## 下载与安装
 
-下载 [**Muck-v1.4.2-install.zip**](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.4.2/Muck-v1.4.2-install.zip)，正常退出游戏，完整解压后双击 **安装.cmd**。已有本套补丁会自动更新，没有则安装，保留存档、个人配置和无关模组。
+下载 [**Muck-v1.5-install.zip**](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.5/Muck-v1.5-install.zip)，正常退出游戏，完整解压后双击 **安装.cmd**。已有本套补丁会自动更新，没有则安装，保留存档、个人配置和无关模组。
 
 **房主与队友都安装相同版本，重启游戏后重新建房。** 仅提供统一安装包；Source code 是开发源码。适用 Windows x64 Steam Muck 1.3 / Build 7077400。
 

@@ -36,7 +36,8 @@ public class ResourceCatalogSmoke : BaseUnityPlugin
     }
     void Catalog()
     {
-        foreach(var i in ItemManager.Instance.allItems.Values.OrderBy(i=>i.id))File.AppendAllText(result,"ITEM "+i.id+" | "+i.name+" | asset="+((UnityEngine.Object)i).name+"\n");
+        foreach(var i in ItemManager.Instance.allItems.Values.OrderBy(i=>i.id))File.AppendAllText(result,"ITEM "+i.id+" | "+i.name+" | asset="+((UnityEngine.Object)i).name+" | type="+i.type+" | processed="+Item(i.processedItem)+" | recipe="+string.Join(",",(i.requirements??new InventoryItem.CraftRequirement[0]).Select(x=>Item(x.item)+"x"+x.amount).ToArray())+" | stats="+i.heal+","+i.hunger+","+i.stamina+" | damage="+i.attackDamage+"\n");
+        foreach(var g in Resources.FindObjectsOfTypeAll<PickupInteract>().Where(p=>p.gameObject.scene.IsValid()).GroupBy(p=>p.gameObject.name+" | "+Item(p.item)+" | amount="+p.amount+" | active="+p.gameObject.activeInHierarchy))File.AppendAllText(result,"PICKUP count="+g.Count()+" | "+g.Key+"\n");
         var groups=Resources.FindObjectsOfTypeAll<HitableResource>().Where(r=>r is HitableTree||r is HitableRock).GroupBy(r=>Describe(r));
         foreach(var g in groups)File.AppendAllText(result,"RESOURCE count="+g.Count()+" | "+g.Key+"\n");
     }

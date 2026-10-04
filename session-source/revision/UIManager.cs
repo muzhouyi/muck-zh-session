@@ -269,24 +269,14 @@ namespace MuckSaveGame
 						i++;
 					}
 
-					//creates none button that allows players to deselect saves
-					Button noneButton = UnityEngine.Object.Instantiate(__instance.startBtn, scrollContent.transform
-							  .transform).GetComponent<Button>();
-					noneButton.GetComponentInChildren<TextMeshProUGUI>().text = "None";
-
-					noneButton.onClick = new Button.ButtonClickedEvent();
-					noneButton.onClick.AddListener(delegate ()
-					{
-						LoadManager.selectedSavePath = null;
-						selectionGUI.SetActive(false);
-					});
+					
 				}
 				else
 				{
 					//if there are no saves, creates no saves button
 					Button noSaveButton = UnityEngine.Object.Instantiate(__instance.startBtn, scrollContent
 							  .transform).GetComponent<Button>();
-					noSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "No Saves :(";
+					noSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "暂无存档";
 
 					noSaveButton.onClick = new Button.ButtonClickedEvent();
 					noSaveButton.onClick.AddListener(delegate ()

@@ -70,7 +70,7 @@ public class NativeResourcesSmoke : BaseUnityPlugin
         selected.Clear();selected.Add(dk);Nav("RefreshTargets");
         Check(pins.Cast<object>().Any(p=>Field(p,"Position")!=null&&Field(p,"Title").ToString().Contains("深色橡木")),"dark oak marker has a position and the correct Chinese label");
         selected.Clear();selected.Add(ck);Nav("RefreshTargets");
-        Check(pins.Cast<object>().Any(p=>Field(p,"Title").ToString().Contains("煤炭石")),"coal stone marker explicitly identifies the stone source");
+        Check(pins.Cast<object>().Any(p=>Field(p,"Title").ToString().Contains("煤炭石矿")),"coal stone marker explicitly identifies the stone source");
         var go=new GameObject("Native coal pickup test");go.SetActive(false);go.transform.position=deposits[0].transform.position+Vector3.right*2;
         var pickup=go.AddComponent<PickupInteract>();pickup.item=coal;pickup.amount=2;
         Nav("ScanResources");PlayerMovement.Instance.transform.position=pickup.transform.position;
@@ -133,7 +133,7 @@ public class NativeResourcesSmoke : BaseUnityPlugin
         var pickup=pickupObject.AddComponent<PickupInteract>();pickup.item=coal;pickup.amount=3;chance.hp=100;
         Nav("ScanResources");var pickupTargets=list.Cast<object>().Where(t=>ReferenceEquals(Field(t,"Pickup"),pickup)||ReferenceEquals(Field(t,"Resource"),chance)&&Field(t,"Key").ToString()==key).ToArray();list.Clear();foreach(var t in pickupTargets)list.Add(t);
         target=Nav("Nearest",key);Check(ReferenceEquals(Field(target,"Pickup"),pickup)&&!(bool)Field(target,"Extra"),"ready-to-pick coal wins over a closer random-drop rock");
-        Nav("RefreshTargets");Check(pins.Cast<object>().Any(p=>Field(p,"Title").ToString().Contains("可拾取")),"ground coal is labelled as ready to pick up");
+        Nav("RefreshTargets");Check(pins.Cast<object>().Any(p=>Field(p,"Title").ToString().Contains("煤炭小块")),"ground coal is labelled as ready to pick up");
         pickup.amount=0;target=Nav("Nearest",key);Check(ReferenceEquals(Field(target,"Resource"),chance),"an exhausted pickup restores the clearly labelled fallback");
         UnityEngine.Object.Destroy(pickupObject);
         list.Clear();foreach(var t in all)list.Add(t);selected.Clear();

@@ -174,6 +174,7 @@ namespace MuckSaveGame
         private static string ItemKey(int id) { return "item:" + id; }
         private static string TitleFor(string key)
         {
+            if (key == "food:mushroom") return "蘑菇";
             if (landmarks.TryGetValue(key, out var title)) return title;
             int id; if (key.StartsWith("item:") && int.TryParse(key.Substring(5), out id) && materials.TryGetValue(id, out var item)) return Display(item);
             return "资源";
@@ -181,7 +182,7 @@ namespace MuckSaveGame
         private static void ScanResources()
         {
             resources.Clear(); targets.Clear(); materials.Clear();
-            if (ItemManager.Instance) foreach (var item in ItemManager.Instance.allItems.Values) if (item && MaterialOrder(item) < 100) materials[item.id] = item;
+            if (ItemManager.Instance) foreach (var item in ItemManager.Instance.allItems.Values) if (item) materials[item.id] = item;
             // FindObjectsOfTypeAll includes generated but distance-culled chunks; scene filter excludes prefab assets.
             foreach (var r in Resources.FindObjectsOfTypeAll<HitableResource>())
             {
@@ -215,13 +216,14 @@ namespace MuckSaveGame
             { if (camp && camp.gameObject.scene.IsValid()) targets.Add(new Target { Key = "npc:camp", Transform = camp.transform, Camp = camp }); }
             foreach (var pickup in Resources.FindObjectsOfTypeAll<PickupInteract>())
             {
-                if (!pickup || !pickup.gameObject.scene.IsValid() || !pickup.item || pickup.item.name.Replace(" ", "").ToLowerInvariant() != "coal") continue;
+                if (!pickup || !pickup.gameObject.scene.IsValid() || !pickup.item || NormalizedName(pickup.item) == "flint") continue;
                 var t = new Target { Key = ItemKey(pickup.item.id), Transform = pickup.transform, Pickup = pickup }; if (Alive(t)) targets.Add(t);
+                if (IsMushroom(pickup.item) && Alive(t)) targets.Add(new Target { Key = "food:mushroom", Transform = pickup.transform, Pickup = pickup });
             }
         }
         private static void AddResourceTarget(HitableResource resource, InventoryItem item, bool incidental)
         {
-            if (!item || MaterialOrder(item) >= 100) return;
+            if (!item || MaterialOrder(item) >= 100 || IsGroundFood(item)) return;
             materials[item.id] = item;
             targets.Add(new Target { Key = ItemKey(item.id), Transform = resource.transform, Resource = resource, Extra = incidental });
         }
@@ -237,7 +239,7 @@ namespace MuckSaveGame
             }
             return nearest;
         }
-        private static string Display(InventoryItem item)
+        internal static string Display(InventoryItem item)
         {
             if (!item) return "";
             string original = item.name;
@@ -249,25 +251,45 @@ namespace MuckSaveGame
             // Only gatherable raw resources belong in this menu; several vanilla
             // building items also carry processable flags, so those flags alone
             // must not make an anvil or workbench a navigation target.
-            string name = item.name.Replace(" ", "").ToLowerInvariant();
+            string name = NormalizedName(item);
             if (name == "redapple") name = "apple";
-            string[] names = { "wood", "birchwood", "firwood", "oakwood", "darkoakwood", "rock", "coal", "ironore", "goldore", "mithrilore", "adamantiteore", "obamiumore", "ruby", "flint", "apple", "wheat" };
+            string[] names = { "wood", "birchwood", "firwood", "oakwood", "darkoakwood", "rock", "coal", "ironore", "goldore", "mithrilore", "adamantiteore", "obamiumore", "ruby", "apple", "wheat" };
             int index = Array.IndexOf(names, name); return index < 0 ? 100 : index;
         }
+        private static string NormalizedName(InventoryItem item) { return (item.name ?? "").Replace(" ", "").ToLowerInvariant(); }
+        private static bool IsMushroom(InventoryItem item) { return item && item.type == InventoryItem.ItemType.Food && NormalizedName(item).EndsWith("shroom", StringComparison.Ordinal); }
+        private static bool IsGroundFood(InventoryItem item) { string name = NormalizedName(item); return name == "redapple" || name == "apple" || name == "wheat" || IsMushroom(item); }
+        private static void AddRecipeMaterial(InventoryItem item, HashSet<int> path)
+        {
+            if (!item || NormalizedName(item) == "flint" || !path.Add(item.id)) return;
+            try
+            {
+                if (MaterialOrder(item) < 100 || IsMushroom(item))
+                { AddSelected(IsMushroom(item) ? "food:mushroom" : ItemKey(item.id)); return; }
+                var recipe = item.requirements ?? new InventoryItem.CraftRequirement[0];
+                if (item.craftable && recipe.Length > 0)
+                { foreach (var need in recipe) if (need != null && need.amount > 0) AddRecipeMaterial(need.item, path); return; }
+                // Only enabled processing recipes are valid: unused vanilla
+                // processedItem references on food point at unrelated items.
+                var rawItems = ItemManager.Instance.allItems.Values.Where(raw => raw && raw.processable && raw.processedItem && raw.processedItem.id == item.id).ToArray();
+                if (rawItems.Length > 0) foreach (var raw in rawItems) AddRecipeMaterial(raw, path);
+                else AddSelected(ItemKey(item.id)); // Existing dropped boss ingredients can also be located.
+            }
+            finally { path.Remove(item.id); }
+        }
+        private static void AddSelected(string key) { if (!selected.Contains(key)) selected.Add(key); }
         private static void SelectRecipe(InventoryItem item)
         {
+            ScanResources();
             selected.Clear();
             var requirements = new List<string>();
             foreach (var need in item.requirements ?? new InventoryItem.CraftRequirement[0])
             {
-                if (!need.item) continue;
+                if (need == null || !need.item || need.amount <= 0) continue;
                 requirements.Add(Display(need.item) + " × " + need.amount);
-                if (materials.ContainsKey(need.item.id)) { if (!selected.Contains(ItemKey(need.item.id))) selected.Add(ItemKey(need.item.id)); continue; }
-                // Resolve ingots from the game's actual smelting data, rather than a guessed tier table.
-                foreach (var raw in ItemManager.Instance.allItems.Values)
-                    if (raw && raw.processedItem && raw.processedItem.id == need.item.id && materials.ContainsKey(raw.id) && !selected.Contains(ItemKey(raw.id))) selected.Add(ItemKey(raw.id));
+                AddRecipeMaterial(need.item, new HashSet<int>());
             }
-            SessionControl.Say("制作“" + Display(item) + "”需要：" + string.Join("、", requirements.ToArray()) + "。已导航地图上对应木材和矿石；其他材料需另外获得。");
+            SessionControl.Say("制作“" + Display(item) + "”需要：" + string.Join("、", requirements.ToArray()) + "。已同时标记各项原料最近的位置；未找到的原料会在屏幕左上方列出。");
             RefreshTargets(); ClosePanel();
         }
         private static void RefreshTargets()
@@ -280,9 +302,11 @@ namespace MuckSaveGame
             foreach (string key in selected)
             {
                 var target = Nearest(key); string title = TitleFor(key);
-                if (target != null && target.Extra) title += "（概率掉落）";
+                bool coal = key.StartsWith("item:") && materials.TryGetValue(int.Parse(key.Substring(5)), out var material) && NormalizedName(material) == "coal";
+                if (target != null && coal && target.Pickup) title = "煤炭小块";
+                else if (target != null && coal && target.Resource && !target.Extra) title = "煤炭石矿";
+                else if (target != null && target.Extra) title = (coal ? "煤炭" : title) + "（概率掉落）";
                 else if (target != null && target.Pickup) title += "（可拾取）";
-                else if (target != null && target.Resource && target.Key.StartsWith("item:") && materials.TryGetValue(int.Parse(target.Key.Substring(5)), out var material) && material.name.Trim().Equals("Coal", StringComparison.OrdinalIgnoreCase)) title += "（煤炭石）";
                 UpdatePin(pins[index++], title, target != null ? target.Transform.position + Vector3.up * 2f : (Vector3?)null, false);
                 if (target == null) missing.Add(TitleFor(key));
             }
@@ -404,7 +428,11 @@ namespace MuckSaveGame
                     { var recipe = item; choices.Add(new KeyValuePair<string, Action>(Display(item), () => SelectRecipe(recipe))); }
                 else if (tab == 2)
                     foreach (var landmark in landmarks) { string key = landmark.Key; choices.Add(new KeyValuePair<string, Action>(landmark.Value, () => SelectTarget(key))); }
-                else foreach (var item in materials.Values.OrderBy(MaterialOrder).ThenBy(i => i.name)) { string key = ItemKey(item.id); choices.Add(new KeyValuePair<string, Action>(Display(item), () => SelectTarget(key))); }
+                else
+                {
+                    foreach (var item in materials.Values.Where(i => MaterialOrder(i) < 100).OrderBy(MaterialOrder).ThenBy(i => i.name)) { string key = ItemKey(item.id); choices.Add(new KeyValuePair<string, Action>(NormalizedName(item) == "coal" ? "煤炭" : Display(item), () => SelectTarget(key))); }
+                    choices.Add(new KeyValuePair<string, Action>("蘑菇", () => SelectTarget("food:mushroom")));
+                }
                 pages = Math.Max(1, (choices.Count + 15) / 16); page = Math.Max(0, Math.Min(page, pages - 1));
                 for (int i = 0; i < 16 && page * 16 + i < choices.Count; i++) { var choice = choices[page * 16 + i]; Button(choice.Key, 20 + (i % 2) * 335, 145 + (i / 2) * 43, 325, choice.Value); }
             }
