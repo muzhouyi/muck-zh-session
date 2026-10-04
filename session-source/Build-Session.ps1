@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$GameDir, [string]$RoslynDir = $PSHOME, [switch]$Smoke)
+param([Parameter(Mandatory=$true)][string]$GameDir, [string]$RoslynDir = $PSHOME, [switch]$Smoke, [string]$SmokeSource = 'SessionSmoke.cs')
 $ErrorActionPreference = 'Stop'
 $taskRoot = Join-Path $PSScriptRoot 'revision'
 $managed = Join-Path $GameDir 'Muck_Data\Managed'
@@ -6,7 +6,7 @@ $loaderCore = Join-Path $GameDir 'BepInEx\core'
 Add-Type -Path (Join-Path $RoslynDir 'Microsoft.CodeAnalysis.dll')
 Add-Type -Path (Join-Path $RoslynDir 'Microsoft.CodeAnalysis.CSharp.dll')
 $syntax = [Microsoft.CodeAnalysis.SyntaxTree[]]@(Get-ChildItem -LiteralPath $taskRoot -Filter '*.cs' -Recurse | ForEach-Object { [Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText([IO.File]::ReadAllText($_.FullName)) })
-if ($Smoke) { $syntax = [Microsoft.CodeAnalysis.SyntaxTree[]]@([Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'SessionSmoke.cs')))) }
+if ($Smoke) { $syntax = [Microsoft.CodeAnalysis.SyntaxTree[]]@([Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText([IO.File]::ReadAllText((Join-Path $PSScriptRoot $SmokeSource)))) }
 $refPaths = @(Get-ChildItem -LiteralPath $managed -Filter '*.dll' | ForEach-Object FullName)
 $refPaths += @("$loaderCore\BepInEx.dll", "$loaderCore\0Harmony.dll")
 if ($Smoke) { $refPaths += Join-Path $taskRoot 'MuckSaveGame.dll' }

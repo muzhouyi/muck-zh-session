@@ -17,7 +17,7 @@ namespace MuckSaveGame
         private static readonly HashSet<int> restored = new HashSet<int>();
         private static float priorScale = 1f;
         private static float nextBroadcast;
-        public const string ProtocolVersion = "0.9.2";
+        public const string ProtocolVersion = "0.9.5";
         private static readonly LobbySyncState lobbySync = new LobbySyncState();
         private static readonly PeerProtocolRegistry peerProtocols = new PeerProtocolRegistry();
         private const int HelloChannel = 94;
@@ -45,7 +45,7 @@ namespace MuckSaveGame
         {
             if (lobbySync.ShouldNotify(message, Time.realtimeSinceStartup)) Say(message);
         }
-        private static bool CompatiblePeers()
+        public static bool CompatiblePeers()
         {
             foreach (var pair in Server.clients)
             {
@@ -68,8 +68,8 @@ namespace MuckSaveGame
                 {
                     string name = pair.Value.player.username.Replace("<", "＜").Replace(">", "＞");
                     CompatibilityNotice(string.IsNullOrEmpty(marker)
-                        ? "正在等待队友「" + name + "」的联机模组确认。请双方使用 0.9.4，刚加入时稍等几秒再试。"
-                        : "队友「" + name + "」的模组通信版本不一致，请双方更新为 0.9.4。");
+                        ? "正在等待队友「" + name + "」的联机模组确认。请双方使用 0.9.5，刚加入时稍等几秒再试。"
+                        : "队友「" + name + "」的模组通信版本不一致，请双方更新为 0.9.5。");
                     return false;
                 }
             }
@@ -85,6 +85,7 @@ namespace MuckSaveGame
         {
             if (!LocalClient.serverOwner || !World.doSave || string.IsNullOrEmpty(LoadManager.selectedSavePath)) return false;
             if (Saving) { Say("正在存档，请等待完成。"); return false; }
+            if (SharedContainers.Pending) { Say("请等待容器操作确认后再保存。"); return false; }
             if (!CompatiblePeers()) return false;
             bool allDead = GameManager.players.Count > 0;
             foreach (var player in GameManager.players.Values) if (!player.dead) allDead = false;
@@ -221,6 +222,7 @@ namespace MuckSaveGame
         private static bool Leave()
         {
             if (Saving) { Say("存档尚未完成，请等待完成提示后退出。"); return false; }
+            if (SharedContainers.Pending) { Say("容器操作还在等待确认，请确认后再退出。"); return false; }
             Reset(); return true;
         }
         public static void Reset()
@@ -228,7 +230,7 @@ namespace MuckSaveGame
             EndSave(); readySent = false; pendingReady.Clear(); restored.Clear();
             lobbySync.Reset();
             peerProtocols.Clear(); nextHello = 0;
-            TeammateNames.Reset();
+            TeammateNames.Reset(); Navigation.Reset(); SharedContainers.Reset();
             if (Paused) { Paused = false; Time.timeScale = priorScale > 0f ? priorScale : 1f; }
         }
     }

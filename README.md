@@ -1,13 +1,13 @@
 # Muck 汉化、存档与联机暂停
 
-给 Windows Steam Muck 增加中文界面、保存继续、房主暂停，以及队友名字与方向提示。最新项目版本 **v1.2**（存档插件 0.9.4）。
+给 Windows Steam Muck 增加中文界面、保存继续、房主暂停，队友提示、回家与材料导航、多人共用容器、死亡保留物品。最新项目版本 **v1.3**（存档插件 0.9.5）。
 
 ## 下载哪个文件
 
 打开 [最新版下载页](https://github.com/muzhouyi/muck-zh-session/releases/latest)，展开 **Assets**：
 
-- **第一次安装**：[Muck-v1.2-install.zip](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.2/Muck-v1.2-install.zip)，包含所需模组与加载器。
-- **已经装过本套补丁**：[Muck-v1.2-update.zip](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.2/Muck-v1.2-update.zip)，只更新存档暂停模组。
+- **第一次安装**：[Muck-v1.3-install.zip](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.3/Muck-v1.3-install.zip)，包含所需模组与加载器。
+- **已经装过本套补丁**：[Muck-v1.3-update.zip](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.3/Muck-v1.3-update.zip)，只更新存档暂停模组。
 - `.sha256` 是校验文件；**Source code** 是开发源码，普通玩家不用下载。
 
 ## 怎么安装
@@ -27,12 +27,16 @@
 | F7 | 房主保存；等“存档完成”后再退出 |
 | F8 | 房主暂停整局，再按继续 |
 | T | 开关队友名字、距离和方向；聊天输入时不触发 |
+| H | 标记当前位置为家，F7 保存后随存档恢复 |
+| N | 选择木材/矿石或武器/工具，标记最近的所需资源 |
 
 下次由**原房主、原账号**建房 → 原队友加入 → 在大厅点“读取存档” → 选存档 → 开始。难度、模式和一天长度保持一致。更多步骤、恢复方法与常见问题见[玩家使用说明](使用说明.md)，下载包内也有可直接打开的“使用说明.html”。
 
+箱子和熔炉默认可多人同时打开；左键取放整组、右键取半组或放一个，暂不支持 Shift 转移。死亡默认保留背包、护甲和鼠标物品，复活规则照常。材料导航会在采集后改找下一处；家与对应存档绑定，不会串到同种子的全新世界。
+
 ## 更新与限制
 
-v1.1 修复加入房间后误判队友模组；v1.2 改进持续联机确认并加入队友提示。[完整更新记录](CHANGELOG.md)。尚未完成真实双机验证；读档会刷新已采集的树木和矿石，锅炉和掉落物仍需核对。先用小进度验证保存、读取与暂停。
+v1.3 新增上述导航、共用容器及死亡保留功能，房主与队友均需更新。[更新记录](CHANGELOG.md)。已通过本机游戏运行检查，真实双机联机仍待验证；读档会刷新已采集的树木和矿石。详细步骤见[使用说明](使用说明.md)。
 
 ## 引用与修改
 
@@ -43,6 +47,8 @@ v1.1 修复加入房间后误判队友模组；v1.2 改进持续联机确认并�
 | [MuckSaveGame · MichMcb](https://thunderstore.io/c/muck/p/MichMcb/MuckSaveGame/) / [MuckMods 源码](https://github.com/Michmcb/MuckMods) | 基于 0.9.1，加入联机暂停、F7 保存、队友数据就绪检查、请求编号及原子写入；上游沿自 flarfo 的 SaveUtility，MIT 许可。 |
 | [BepInExPack Muck](https://thunderstore.io/c/muck/p/BepInEx/BepInExPack_Muck/) / [BepInEx 5.4.11](https://github.com/BepInEx/BepInEx/tree/v5.4.11) | 模组加载器与依赖，随安装包提供。 |
 | [UnityDoorstop](https://github.com/NeighTools/UnityDoorstop/tree/v3.3.1.0)、[HarmonyX](https://github.com/BepInEx/HarmonyX)、[Mono.Cecil](https://github.com/jbevain/cecil)、[MonoMod](https://github.com/MonoMod/MonoMod) | 加载、补丁和程序集处理组件；保留各自许可证。 |
+
+导航交互参考 [LocalMapMarkers · PigeonsMods](https://thunderstore.io/c/muck/p/PigeonsMods/LocalMapMarkers/)，独立实现，未复制或打包其插件。
 
 第三方版权、许可证和原说明保存在 [upstream](upstream)。UU9i 上游未附独立 LICENSE，不将汉化部分标注为 MIT；本仓库也不以单一许可证覆盖所有组件。本项目是个人修订整合包，非游戏或上游作者的官方发布。
 

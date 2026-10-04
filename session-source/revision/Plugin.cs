@@ -10,7 +10,7 @@ namespace MuckSaveGame
 	using System.Reflection;
 	using System.Xml;
 	using UnityEngine;
-	[BepInPlugin("MuckSaveGame.MichMcb", "MuckSaveGame + Session", "0.9.4")]
+	[BepInPlugin("MuckSaveGame.MichMcb", "MuckSaveGame + Session", "0.9.5")]
 	[BepInIncompatibility("flarfo.saveutility")]
 	public class Plugin : BaseUnityPlugin
 	{
@@ -33,8 +33,8 @@ namespace MuckSaveGame
             try { action(); }
             catch (Exception ex) { if (Time.realtimeSinceStartup >= nextRuntimeWarning) { nextRuntimeWarning = Time.realtimeSinceStartup + 10f; Logger.LogWarning(feature + " will retry: " + ex); } }
         }
-        public void Update() { RunFeature(SessionControl.Tick, "Session control"); RunFeature(TeammateNames.UpdateInput, "Teammate input"); }
-        public void LateUpdate() { if (SessionControl.Paused) Time.timeScale = 0f; RunFeature(TeammateNames.Render, "Teammate names"); }
+        public void Update() { RunFeature(SessionControl.Tick, "Session control"); RunFeature(TeammateNames.UpdateInput, "Teammate input"); RunFeature(Navigation.Tick, "Navigation"); RunFeature(SharedContainers.Tick, "Shared containers"); }
+        public void LateUpdate() { if (SessionControl.Paused) Time.timeScale = 0f; RunFeature(TeammateNames.Render, "Teammate names"); RunFeature(Navigation.Render, "Navigation markers"); }
         public void Awake()
 		{
 			Log = Logger;
@@ -46,14 +46,14 @@ namespace MuckSaveGame
 			MultiplayerSaveDelay = Config.BindMoreThanZero("Main", "MultiplayerSaveDelay", MultiplayerSaveDelay, "The delay, in seconds, between clicking the Save button and the save actually executing when playing multiplayer. This is so the packets from clients have time to be sent over the network to the game host. There's no delay in singleplayer; saving always happens instantly.").Value;
 
 			VerticalOffset = Config.Bind("Main", "VerticalOffset", VerticalOffset, "Offsets the local player by this value on the Y axis when loading data. This can be useful to prevent you from falling through floors on loading a savegame. Doesn't work in multiplayer yet.").Value;
-			TeammateNames.Initialize(Config.Bind("Teammates", "ShowNames", true, "Show teammate names, distances and off-screen direction markers. Press T to toggle locally; chat typing is ignored."));
+			Navigation.Initialize(Config); TeammateNames.Initialize(Config.Bind("Teammates", "ShowNames", true, "Show teammate names, distances and off-screen direction markers. Press T to toggle locally; chat typing is ignored."));
             Config.Save();
 
 			Directory.CreateDirectory(SaveSystem.GetSavesBasePath());
 
 			SaveSystem.MigrateOldSaves();
 
-			Logger.LogInfo("Loaded MuckSaveGame 0.9.4 session edition! F7 save, F8 host pause, T teammate names.");
+			Logger.LogInfo("Loaded MuckSaveGame 0.9.5 session edition! F7 save, F8 host pause, T teammate names.");
 
 			AssetBundle assetBundle = GetAssetBundleFromResource("MuckSaveGameAssets");
 
