@@ -1,36 +1,41 @@
-# Muck 汉化与联机存档暂停
+# Muck 汉化、存档与联机暂停
 
-为 Windows Steam 版 Muck 提供中文界面、保存继续和房主联机暂停。**项目发布版本：v1.2**；内部汉化插件为 1.0.2，存档插件为修订版 0.9.4。
+给 Windows Steam Muck 增加中文界面、保存继续、房主暂停，以及队友名字与方向提示。最新项目版本 **v1.2**（存档插件 0.9.4）。
 
-## 功能
+## 下载哪个文件
 
-- 补齐教程、物品和动态提示译文；F5 刷新，F6 切换中英文。
-- 房主 F7 存档；退出后由原房主建房，在大厅读取存档继续。
-- 房主 F8 暂停整局，再按继续；支持每日自动存档与上一份存档备份。
-- 显示队友名字、距离和屏幕外方向；T 键切换，聊天输入时不触发。
+打开 [最新版下载页](https://github.com/muzhouyi/muck-zh-session/releases/latest)，展开 **Assets**：
 
-## 最近更新
+- **第一次安装**：[Muck-v1.2-install.zip](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.2/Muck-v1.2-install.zip)，包含所需模组与加载器。
+- **已经装过本套补丁**：[Muck-v1.2-update.zip](https://github.com/muzhouyi/muck-zh-session/releases/download/v1.2/Muck-v1.2-update.zip)，只更新存档暂停模组。
+- `.sha256` 是校验文件；**Source code** 是开发源码，普通玩家不用下载。
 
-改进持续联机确认，避免房间标记临时缺失导致 F7 / F8 被拦截；新增队友名字、距离和方向提示，T 键开关。
+## 怎么安装
 
-[更新记录](CHANGELOG.md)：v1.0 / v1.1 / v1.2 分别对应存档插件 0.9.2 / 0.9.3 / 0.9.4。汉化插件保持 1.0.2。
+1. 房主和朋友都正常退出 Muck，完整解压 ZIP。
+2. 首次安装双击 **安装.cmd**；自动寻找游戏，找不到时选择含 Muck.exe 的游戏目录。看到“安装完成”后，从 Steam 启动。
+3. 小更新包：在 Steam 库右键 Muck → 管理 → 浏览本地文件，把旧 `BepInEx/plugins/MuckSaveGame.dll` 复制到桌面备份，再用包里的同名文件替换。不要改动 Saves 和汉化文件，备份不要放在 plugins 中。
+4. **双方都安装相同版本、重启游戏，再重新建房。**
 
-## 安装
+无需 Agent、手动编译或 PowerShell 7。完整包会备份修改文件并保留无关模组。适用 Windows x64 Steam Muck 1.3 / Build 7077400；游戏版本或已有模组冲突时会停止。
 
-1. 在 [v1.2 Release](https://github.com/muzhouyi/muck-zh-session/releases/tag/v1.2) 下载 `Muck-zh-session-v1.2.zip`，完整解压。
-2. 所有人关闭 Muck，安装同一个包。让 Agent 阅读《给Agent的交接说明.md》，或在 Windows PowerShell 中运行：
+## 游戏里怎么用
 
-```powershell
-.\Verify-Package.ps1
-.\Install-MuckSession.ps1 -GameDir '你的 Muck 游戏目录' -DryRun
-.\Install-MuckSession.ps1 -GameDir '你的 Muck 游戏目录'
-```
+| 按键 | 功能 |
+| --- | --- |
+| F5 / F6 | 刷新汉化 / 切换中英文 |
+| F7 | 房主保存；等“存档完成”后再退出 |
+| F8 | 房主暂停整局，再按继续 |
+| T | 开关队友名字、距离和方向；聊天输入时不触发 |
 
-安装器保留无关模组并备份文件。已验证版本为 Muck 1.3 / Steam Build 7077400；版本不符或发现冲突会停止。详细使用、恢复与构建方法见 [使用说明](README-先读我.md)和 [交接说明](给Agent的交接说明.md)。仓库中的源码不包含加载器二进制；安装和源码构建请使用完整 Release 包。
+下次由**原房主、原账号**建房 → 原队友加入 → 在大厅点“读取存档” → 选存档 → 开始。难度、模式和一天长度保持一致。更多步骤、恢复方法与常见问题见[玩家使用说明](使用说明.md)，下载包内也有可直接打开的“使用说明.html”。
 
-已装旧版：下载同页的 `Muck-zh-session-v1.2-update.zip`，关闭游戏并备份旧 DLL 后，替换 `BepInEx/plugins/MuckSaveGame.dll`。双方都要更新并重启，备份不要留在 plugins 内；保留原 Saves 和汉化文件。
+## 更新与限制
+
+v1.1 修复加入房间后误判队友模组；v1.2 改进持续联机确认并加入队友提示。[完整更新记录](CHANGELOG.md)。尚未完成真实双机验证；读档会刷新已采集的树木和矿石，锅炉和掉落物仍需核对。先用小进度验证保存、读取与暂停。
 
 ## 引用与修改
+
 
 | 上游 / 作者 | 本项目使用及修改 |
 | --- | --- |
@@ -41,6 +46,3 @@
 
 第三方版权、许可证和原说明保存在 [upstream](upstream)。UU9i 上游未附独立 LICENSE，不将汉化部分标注为 MIT；本仓库也不以单一许可证覆盖所有组件。本项目是个人修订整合包，非游戏或上游作者的官方发布。
 
-## 已验证与限制
-
-本版已编译并通过核心、翻译和安装恢复检查；此前版本的保存、读取和暂停曾在本机游戏验证。本版新增名字界面和 P2P 确认尚未完成实机验证。**尚未完成两台电脑的真实联机验证**；读档会刷新已采集的树木、矿石等资源，锅炉和掉落物仍需联机核对。包内不含游戏本体、游戏依赖程序集、微软字体、个人存档或账户日志。

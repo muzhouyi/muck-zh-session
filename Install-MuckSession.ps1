@@ -57,7 +57,7 @@ $peOffset = [BitConverter]::ToInt32($exeBytes, 60)
 if ($peOffset -lt 0 -or $peOffset + 6 -gt $exeBytes.Length -or [BitConverter]::ToUInt16($exeBytes, $peOffset + 4) -ne 0x8664) { throw 'This package requires Windows x64 Muck.' }
 $fontFolder = [Environment]::GetFolderPath('Fonts')
 $fontFile = @('msyh.ttc', 'simhei.ttf', 'simsun.ttc') | Where-Object { Test-Path -LiteralPath (Join-Path $fontFolder $_) } | Select-Object -First 1
-if (-not $fontFile) { throw 'No supported CJK system font found. Ask your agent to provide a Chinese font and configure FontFile before manual installation.' }
+if (-not $fontFile) { throw 'No supported CJK system font found. Please provide a Chinese font and configure FontFile before manual installation.' }
 
 $existingCore = Join-Path $GameDir 'BepInEx\core\BepInEx.dll'
 $reuseLoader = Test-Path -LiteralPath $existingCore
@@ -65,10 +65,10 @@ if ($reuseLoader) {
     $version = [Reflection.AssemblyName]::GetAssemblyName($existingCore).Version
     if ($version.Major -ne 5) { throw "Existing BepInEx $version is incompatible. Do not overwrite it automatically." }
     $doorstopFile = Join-Path $GameDir 'doorstop_config.ini'
-    if (-not (Test-Path -LiteralPath $doorstopFile)) { throw 'Existing loader has no doorstop_config.ini. Ask your agent to inspect the mod setup.' }
+    if (-not (Test-Path -LiteralPath $doorstopFile)) { throw 'Existing loader has no doorstop_config.ini. Please inspect the mod setup.' }
     $doorstop = [IO.File]::ReadAllText($doorstopFile)
     if ($doorstop -notmatch '(?im)^\s*enabled\s*=\s*true\s*$' -or $doorstop -notmatch '(?im)^\s*targetAssembly\s*=\s*BepInEx[\\/]core[\\/]BepInEx\.Preloader\.dll\s*$') {
-        throw 'Existing Doorstop configuration differs from the supported setup. Ask your agent to inspect it.'
+        throw 'Existing Doorstop configuration differs from the supported setup. Please inspect it.'
     }
     if (-not ((Test-Path -LiteralPath (Join-Path $GameDir 'winhttp.dll')) -or (Test-Path -LiteralPath (Join-Path $GameDir 'version.dll')))) { throw 'Existing BepInEx has no known Windows loader hook.' }
     Write-Output "Reusing existing BepInEx $version; core files and BepInEx.cfg will be preserved."
@@ -79,7 +79,7 @@ if ($reuseLoader) {
 }
 # Session mod is tied to the verified game build; do not install against unknown APIs.
 $expectedGameHash = '5F9D0DC1E0E72F5493013C92D05ED9FB8628019F54F8BC02162DAD0D2F20810C'
-if ((Get-FileHash -LiteralPath (Join-Path $GameDir 'Muck_Data\Managed\Assembly-CSharp.dll')).Hash -ne $expectedGameHash) { throw 'Unsupported Muck build. Ask your agent to check compatibility before installing.' }
+if ((Get-FileHash -LiteralPath (Join-Path $GameDir 'Muck_Data\Managed\Assembly-CSharp.dll')).Hash -ne $expectedGameHash) { throw 'Unsupported Muck build. Please check compatibility before installing.' }
 $sessionDestination = Join-Path $GameDir 'BepInEx\plugins\MuckSaveGame.dll'
 foreach ($dll in Get-ChildItem -LiteralPath (Join-Path $GameDir 'BepInEx\plugins') -Filter '*.dll' -File -Recurse -ErrorAction SilentlyContinue) {
     $metadata = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($dll.FullName))

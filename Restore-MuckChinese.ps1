@@ -6,7 +6,7 @@ $BackupDir = (Resolve-Path -LiteralPath $BackupDir).ProviderPath.TrimEnd('\')
 $stateFile = Join-Path $BackupDir 'installation.json'
 $state = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
 if ($state.RolledBack -or $state.Restored) { throw 'This installation has already been rolled back/restored.' }
-if (-not $state.Completed) { throw 'Installation did not finish. Ask your agent to inspect the transaction before restoring.' }
+if (-not $state.Completed) { throw 'Installation did not finish. Please inspect the transaction before restoring.' }
 $gameRoot = (Resolve-Path -LiteralPath $state.GameDir).ProviderPath.TrimEnd('\')
 $expectedBackupParent = [IO.Path]::GetFullPath((Join-Path $gameRoot '.muck-zh-backups')).TrimEnd('\') + '\'
 $expectedSessionParent = [IO.Path]::GetFullPath((Join-Path $gameRoot '.muck-session-backups')).TrimEnd('\') + '\'
