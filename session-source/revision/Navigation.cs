@@ -21,7 +21,7 @@ namespace MuckSaveGame
         private static ConfigEntry<KeyCode> homeKey, menuKey;
         private static readonly SortedDictionary<int, Vector3> homes = new SortedDictionary<int, Vector3>();
         private static readonly HashSet<int> awakened = new HashSet<int>();
-        private sealed class Target { public string Key; public Transform Transform; public HitableResource Resource; public LootContainerInteract Chest; public TraderInteract Trader; public GenerateCamp Camp; public bool Extra; }
+        private sealed class Target { public string Key; public Transform Transform; public HitableResource Resource; public LootContainerInteract Chest; public TraderInteract Trader; public GenerateCamp Camp; public PickupInteract Pickup; public bool Extra; }
         private static readonly List<Target> targets = new List<Target>();
         private static float nextTargets;
         private static readonly Dictionary<string, string> landmarks = new Dictionary<string, string> { {"chest:free","免费宝箱"}, {"chest:white","普通宝箱"}, {"chest:blue","稀有宝箱"}, {"chest:gold","传奇宝箱"}, {"npc:trader","交易 NPC"}, {"npc:camp","交易营地"} };
@@ -168,6 +168,7 @@ namespace MuckSaveGame
             if (t.Chest) return !(bool)chestOpened.GetValue(t.Chest);
             if (t.Trader) { var hit = t.Trader.GetComponentInParent<Hitable>(); return t.Trader.gameObject.activeSelf && (!hit || hit.hp > 0); }
             if (t.Camp) return true;
+            if (t.Pickup) return t.Pickup.item && t.Pickup.amount > 0;
             return false;
         }
         private static string ItemKey(int id) { return "item:" + id; }
@@ -208,12 +209,22 @@ namespace MuckSaveGame
             { var t = new Target { Key = "npc:trader", Transform = trader.transform, Trader = trader }; if (Alive(t)) targets.Add(t); }
             foreach (var camp in Resources.FindObjectsOfTypeAll<GenerateCamp>())
             { if (camp && camp.gameObject.scene.IsValid()) targets.Add(new Target { Key = "npc:camp", Transform = camp.transform, Camp = camp }); }
+            foreach (var pickup in Resources.FindObjectsOfTypeAll<PickupInteract>())
+            {
+                if (!pickup || !pickup.gameObject.scene.IsValid() || !pickup.item || pickup.item.name.Replace(" ", "").ToLowerInvariant() != "coal") continue;
+                var t = new Target { Key = ItemKey(pickup.item.id), Transform = pickup.transform, Pickup = pickup }; if (Alive(t)) targets.Add(t);
+            }
         }
         private static Target Nearest(string key)
         {
             if (!PlayerMovement.Instance) return null;
-            var position = PlayerMovement.Instance.transform.position; Target nearest = null; float best = float.PositiveInfinity;
-            foreach (var t in targets) if (t.Key == key && Alive(t)) { float distance = (t.Transform.position - position).sqrMagnitude; if (distance < best) { best = distance; nearest = t; } }
+            var position = PlayerMovement.Instance.transform.position; Target nearest = null; float best = float.PositiveInfinity; int bestRank = int.MaxValue;
+            foreach (var t in targets) if (t.Key == key && Alive(t))
+            {
+                // Dedicated deposits are chosen before incidental drops, regardless of distance.
+                int rank = t.Extra ? 1 : 0; float distance = (t.Transform.position - position).sqrMagnitude;
+                if (rank < bestRank || (rank == bestRank && distance < best)) { bestRank = rank; best = distance; nearest = t; }
+            }
             return nearest;
         }
         private static string Display(InventoryItem item)
@@ -259,6 +270,7 @@ namespace MuckSaveGame
             {
                 var target = Nearest(key); string title = TitleFor(key);
                 if (target != null && target.Extra) title += "（概率掉落）";
+                else if (target != null && target.Pickup) title += "（可拾取）";
                 UpdatePin(pins[index++], title, target != null ? target.Transform.position + Vector3.up * 2f : (Vector3?)null, false);
                 if (target == null) missing.Add(TitleFor(key));
             }
