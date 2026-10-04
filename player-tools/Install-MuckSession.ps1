@@ -1,9 +1,8 @@
 [CmdletBinding()]
 param([string]$GameDir, [switch]$DryRun)
 $ErrorActionPreference = 'Stop'
-$packageRoot = $PSScriptRoot
-$payloadRoot = Join-Path $packageRoot 'payload'
-if (-not (Test-Path -LiteralPath (Join-Path $packageRoot 'payload-manifest.json'))) { throw 'Source code does not contain the player runtime. Download the install ZIP from GitHub Releases.' }
+$packageRoot = Split-Path -Parent $PSScriptRoot
+$payloadRoot = Join-Path $packageRoot '安装文件'
 
 function Resolve-MuckDirectory {
     param([string]$Requested)
@@ -91,13 +90,15 @@ foreach ($dll in Get-ChildItem -LiteralPath (Join-Path $GameDir 'BepInEx\plugins
 $duplicates = @(Get-ChildItem -LiteralPath (Join-Path $GameDir 'BepInEx\plugins') -Filter 'UU9.Muck.Translater.dll' -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -ne (Join-Path $GameDir 'BepInEx\plugins\UU9.Muck.Translater.dll') })
 if ($duplicates.Count) { throw 'Another copy of the translator exists in a plugin subfolder. Remove the duplicate setup before installing.' }
 
-$manifestData = Get-Content -LiteralPath (Join-Path $packageRoot 'payload-manifest.json') -Raw | ConvertFrom-Json
+$manifestData = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'payload-manifest.json') -Raw | ConvertFrom-Json
 $manifest = @($manifestData)
 foreach ($entry in $manifest) {
     $source = Get-SafePath $payloadRoot $entry.Path
     if (-not (Test-Path -LiteralPath $source -PathType Leaf) -or (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $entry.SHA256) { throw "Package integrity check failed: $($entry.Path)" }
 }
-$plan = @($manifest | Where-Object { -not $reuseLoader -or $_.Path -like 'BepInEx\plugins\*' -or $_.Path -like 'BepInEx\config\UU9.Muck.Translater\*' })
+$plan = @($manifest | Where-Object { (-not $reuseLoader -or $_.Path -like 'BepInEx\plugins\*' -or $_.Path -like 'BepInEx\config\UU9.Muck.Translater\*') -and -not ($_.Path -eq 'BepInEx\config\UU9.Muck.Translater\UU9.Muck.Translater.cfg' -and (Test-Path -LiteralPath (Join-Path $GameDir $_.Path))) })
+if (Test-Path -LiteralPath $sessionDestination) { Write-Output 'Mode: Update existing Muck patch; preserve Saves and user configuration.' }
+else { Write-Output 'Mode: Install Muck patch for the first time.' }
 Write-Output "Game directory: $GameDir"
 Write-Output "Chinese font: $fontFile"
 Write-Output "Files to install/update: $($plan.Count)"
@@ -106,7 +107,7 @@ if ($DryRun) { $plan.Path; Write-Output 'Dry run complete. No files changed.'; r
 $backupRoot = Join-Path $GameDir ('.muck-zh-backups\' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Path $backupRoot -Force | Out-Null
 $records = @()
-$history = [ordered]@{ PackageVersion = '0.9.5-session-with-zh-1.0.2'; GameDir = $GameDir; InstalledAt = (Get-Date).ToString('o'); Completed = $false; Files = @() }
+$history = [ordered]@{ PackageVersion = '0.9.6-session-with-zh-1.0.2'; GameDir = $GameDir; InstalledAt = (Get-Date).ToString('o'); Completed = $false; Files = @() }
 $stateFile = Join-Path $backupRoot 'installation.json'
 try {
     foreach ($entry in $plan) {
@@ -145,6 +146,6 @@ try {
     $history | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $stateFile -Encoding UTF8
     throw $failure
 }
-Write-Output 'Installed Chinese 1.0.2 and personal session edition 0.9.5. Both players need this exact package. Start Muck through Steam, then run Verify-MuckSession.ps1.'
+Write-Output 'Installed Chinese 1.0.2 and personal session edition 0.9.6. Both players need this exact package. Start Muck through Steam; H adds a home and C opens navigation.'
 Write-Output "Backup directory: $backupRoot"
 Write-Output 'Host F7 saves; host F8 pauses/resumes the group; T toggles teammate names locally. F5 reloads Chinese; F6 toggles language. Restart after installation.'

@@ -1,14 +1,20 @@
 # 从源码构建
 
-使用仓库源码（普通玩家请用 Release 安装包）、自己的 Muck 安装和 PowerShell 7（需提供 Roslyn 程序集）。游戏的 Managed 程序集不随本项目分发。
+普通玩家使用 Release 中的统一安装包。仓库 Source code 不包含游戏本体或完整运行包。
+
+开发构建需 PowerShell 7、Roslyn 编译程序集，以及自行安装的 Muck 和 BepInEx 5：
 
 ```powershell
-.\source\Build-Plugin.ps1 -GameDir '你的 Muck 游戏目录'
-.\session-source\Build-Session.ps1 -GameDir '你的 Muck 游戏目录' -RoslynDir $PSHOME
+.\source\Build-Plugin.ps1 -GameDir 'Muck游戏目录' -CompilerAssemblyDir 'Roslyn程序集目录'
+.\session-source\Build-Session.ps1 -GameDir 'Muck游戏目录' -RoslynDir 'Roslyn程序集目录'
 ```
 
-汉化输出为 `source/UU9.Muck.Translater.rebuilt.dll`；存档输出为 `session-source/revision/MuckSaveGame.dll`，编译时嵌入 `MuckSaveGameAssets`。构建存档插件前需在自己的游戏安装好 BepInEx 5。修改后运行 `tests/Test-Translation.ps1`、`session-source/Test-Core.ps1`、`session-source/Test-Convenience.ps1` 和 `tests/Test-Installer.ps1 -ReferenceGameDir '你的 Muck 游戏目录'`，更新清单后再分发。
+存档插件输出 `session-source/revision/MuckSaveGame.dll`，编译时嵌入 `MuckSaveGameAssets`。游戏 Managed 程序集由本地游戏提供，不随仓库分发。
 
-`SessionSmoke.cs` 仅供隔离开发测试，会改变测试世界，不随正常安装加载。
+逻辑检查：`session-source/Test-Core.ps1`、`session-source/Test-Convenience.ps1`、`session-source/Test-Navigation14.ps1`。安装恢复检查在解压的玩家安装包上运行：
 
-`FeatureSmoke.cs` 是隔离游戏检查，覆盖导航、地图路标、真实保存、容器竞态与死亡保留；测试插件不随玩家包发布。只在单独的游戏副本/临时世界运行，勿装到正式存档环境。
+```powershell
+.	ests\Test-Installer.ps1 -ReferenceGameDir 'Muck游戏目录' -PackageDir '玩家安装包解压目录'
+```
+
+`*Smoke.cs` 为开发用隔离游戏检查，不随玩家包加载。只在独立游戏副本和临时世界运行，不装入正式存档环境；较旧 Smoke 对应其发布时版本。

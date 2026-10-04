@@ -243,29 +243,29 @@ namespace MuckSaveGame
 				scrollContent.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(15, 15, 15, 15);
 				scrollContent.GetComponent<VerticalLayoutGroup>().spacing = 2;
 				scrollContent.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.UpperCenter;
-				scrollContent.GetComponent<VerticalLayoutGroup>().childControlWidth = true;
+				scrollContent.GetComponent<VerticalLayoutGroup>().childControlWidth = true; scrollContent.GetComponent<VerticalLayoutGroup>().childControlHeight = true; scrollContent.GetComponent<VerticalLayoutGroup>().childForceExpandHeight = false;
 
 				//updates scrollGUI content variables
 				scrollGUI.GetComponent<ScrollRect>().content = scrollContent.GetComponent<RectTransform>();
 
 				//iterate through worldsaves, create new button for each world save
-				List<string> worldSavePaths = SaveSystem.GetAllSaves();
+				List<string> worldSavePaths = SaveSystem.GetAllSaves().OrderByDescending(File.GetLastWriteTimeUtc).ToList();
 				if (worldSavePaths.Count > 0)
 				{
 					int i = 0;
 					foreach (string path in worldSavePaths)
 					{
-						if (i > 8)
+						if (i >= 0)
 						{
 							//extends scrollcontent UI for each button above 8 so as to not compress buttons together
-							scrollContent.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 750 + (i * 30));
+							scrollContent.GetComponent<RectTransform>().sizeDelta = new Vector2(500, Math.Max(750, worldSavePaths.Count * 78 + 30));
 						}
 
 						//create a new world save button 
 						Button newButton = UnityEngine.Object.Instantiate(__instance.startBtn, scrollContent.transform).GetComponent<Button>();
 						newButton.onClick = new Button.ButtonClickedEvent();
-						newButton.gameObject.AddComponent<SaveButton>();
-						newButton.GetComponentInChildren<TextMeshProUGUI>().text = Path.GetFileName(path);
+						newButton.gameObject.AddComponent<SaveButton>().FileName = Path.GetFileName(path);
+						var saveLabel = newButton.GetComponentInChildren<TextMeshProUGUI>(); saveLabel.text = SaveListInfo.Describe(path); saveLabel.fontSize = 19; saveLabel.enableAutoSizing = false; var layout = newButton.GetComponent<LayoutElement>() ?? newButton.gameObject.AddComponent<LayoutElement>(); layout.minHeight = layout.preferredHeight = 76;
 						i++;
 					}
 

@@ -6,15 +6,16 @@ namespace MuckSaveGame
 
 	public class SaveButton : MonoBehaviour, IPointerClickHandler
 	{
+		public string FileName = "";
 		void Start()
 		{
-			UIManager.saveButtons.Add(GetComponentInChildren<TextMeshProUGUI>().text, this);
+			if (FileName.Length == 0) FileName = GetComponentInChildren<TextMeshProUGUI>().text; UIManager.saveButtons[FileName] = this;
 		}
 		public void OnPointerClick(PointerEventData eventData)
 		{
 			if (eventData.button == PointerEventData.InputButton.Left)
 			{
-				LoadManager.selectedSavePath = SaveSystem.GetPathForFileName(GetComponentInChildren<TextMeshProUGUI>().text);
+				LoadManager.selectedSavePath = SaveSystem.GetPathForFileName(FileName);
 				UIManager.selectionGUI?.SetActive(false);
 			}
 			else if (eventData.button == PointerEventData.InputButton.Right)
@@ -25,19 +26,19 @@ namespace MuckSaveGame
 					UIManager.buttonExtraGUI.SetActive(true);
 				}
 
-				UIManager.curEditSave = GetComponentInChildren<TextMeshProUGUI>().text;
+				UIManager.curEditSave = FileName;
 
 				if (UIManager.buttonExtraGUI != null)
 				{
 					UIManager.buttonExtraGUI.GetComponentInChildren<TextMeshProUGUI>().text = UIManager.curEditSave.Length > 12
-						? GetComponentInChildren<TextMeshProUGUI>().text.Substring(0, 12) + "..."
-						: GetComponentInChildren<TextMeshProUGUI>().text;
+						? FileName.Substring(0, 12) + "..."
+						: FileName;
 				}
 			}
 		}
 		public void UpdateText(string text)
 		{
-			GetComponentInChildren<TextMeshProUGUI>().text = text;
+			FileName = text; GetComponentInChildren<TextMeshProUGUI>().text = SaveListInfo.Describe(SaveSystem.GetPathForFileName(text));
 		}
 	}
 }

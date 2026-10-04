@@ -7,9 +7,10 @@ function Invoke-Install([string]$Directory) {
     $parameters=@{DryRun=$DryRun}
     if ($Directory) {$parameters.GameDir=$Directory}
     $messages=@(& $core @parameters)
+    if ($messages -like 'Mode: Update*') { Write-Host '已检测到旧补丁，将更新到 v1.4。存档和个人配置保留。' } else { Write-Host '首次安装 v1.4。' }
     $messages | Where-Object {$_ -like 'Game directory:*' -or $_ -like 'Backup directory:*'} | ForEach-Object {Write-Host $_}
 }
-Write-Host 'Muck 汉化、存档与暂停补丁' -ForegroundColor Cyan
+Write-Host 'Muck 汉化与联机便利补丁' -ForegroundColor Cyan
 Write-Host '请先正常关闭 Muck。安装会备份改动文件，保留存档与无关模组。'
 try {
     try {Invoke-Install $GameDir} catch {

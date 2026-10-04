@@ -17,7 +17,7 @@ namespace MuckSaveGame
         private static readonly HashSet<int> restored = new HashSet<int>();
         private static float priorScale = 1f;
         private static float nextBroadcast;
-        public const string ProtocolVersion = "0.9.5";
+        public const string ProtocolVersion = "0.9.6";
         private static readonly LobbySyncState lobbySync = new LobbySyncState();
         private static readonly PeerProtocolRegistry peerProtocols = new PeerProtocolRegistry();
         private const int HelloChannel = 94;
@@ -68,8 +68,8 @@ namespace MuckSaveGame
                 {
                     string name = pair.Value.player.username.Replace("<", "＜").Replace(">", "＞");
                     CompatibilityNotice(string.IsNullOrEmpty(marker)
-                        ? "正在等待队友「" + name + "」的联机模组确认。请双方使用 0.9.5，刚加入时稍等几秒再试。"
-                        : "队友「" + name + "」的模组通信版本不一致，请双方更新为 0.9.5。");
+                        ? "正在等待队友「" + name + "」的联机模组确认。请双方使用 0.9.6，刚加入时稍等几秒再试。"
+                        : "队友「" + name + "」的模组通信版本不一致，请双方更新为 0.9.6。");
                     return false;
                 }
             }
