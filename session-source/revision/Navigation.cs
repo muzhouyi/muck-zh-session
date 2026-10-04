@@ -189,14 +189,18 @@ namespace MuckSaveGame
                 var target = new Target { Resource = r, Transform = r.transform };
                 if (!Alive(target)) continue;
                 resources.Add(r);
-                if (r.dropItem && MaterialOrder(r.dropItem) < 100) { target.Key = ItemKey(r.dropItem.id); targets.Add(target); materials[r.dropItem.id] = r.dropItem; }
-                // Coal and flint can be secondary drops; show their actual source instead of pretending they are guaranteed deposits.
-                for (int i = 0; i < (r.dropExtra == null ? 0 : r.dropExtra.Length); i++)
+                // Match LootExtra.CheckDrop: dropItem is used only for dropOne.
+                // Vanilla Coal and DarkOak prefabs contain stale dropItem values
+                // (Iron Ore / Oak Wood); their actual output comes from dropTable.
+                if (!r.dropTable) continue;
+                if (r.dropTable.dropOne)
                 {
-                    var extra = r.dropExtra[i]; if (!extra || MaterialOrder(extra) >= 100 || (r.dropItem && extra.id == r.dropItem.id)) continue;
-                    if (r.dropChance != null && i < r.dropChance.Length && r.dropChance[i] <= 0) continue;
-                    materials[extra.id] = extra; targets.Add(new Target { Key = ItemKey(extra.id), Transform = r.transform, Resource = r, Extra = true });
+                    AddResourceTarget(r, r.dropItem, false);
+                    continue;
                 }
+                foreach (var loot in r.dropTable.loot ?? new LootDrop.LootItems[0])
+                    if (loot != null && loot.dropChance > 0 && loot.amountMax > 0)
+                        AddResourceTarget(r, loot.item, loot.dropChance < 1f || loot.amountMin < 1);
             }
             foreach (var chest in Resources.FindObjectsOfTypeAll<LootContainerInteract>())
             {
@@ -214,6 +218,12 @@ namespace MuckSaveGame
                 if (!pickup || !pickup.gameObject.scene.IsValid() || !pickup.item || pickup.item.name.Replace(" ", "").ToLowerInvariant() != "coal") continue;
                 var t = new Target { Key = ItemKey(pickup.item.id), Transform = pickup.transform, Pickup = pickup }; if (Alive(t)) targets.Add(t);
             }
+        }
+        private static void AddResourceTarget(HitableResource resource, InventoryItem item, bool incidental)
+        {
+            if (!item || MaterialOrder(item) >= 100) return;
+            materials[item.id] = item;
+            targets.Add(new Target { Key = ItemKey(item.id), Transform = resource.transform, Resource = resource, Extra = incidental });
         }
         private static Target Nearest(string key)
         {
@@ -240,6 +250,7 @@ namespace MuckSaveGame
             // building items also carry processable flags, so those flags alone
             // must not make an anvil or workbench a navigation target.
             string name = item.name.Replace(" ", "").ToLowerInvariant();
+            if (name == "redapple") name = "apple";
             string[] names = { "wood", "birchwood", "firwood", "oakwood", "darkoakwood", "rock", "coal", "ironore", "goldore", "mithrilore", "adamantiteore", "obamiumore", "ruby", "flint", "apple", "wheat" };
             int index = Array.IndexOf(names, name); return index < 0 ? 100 : index;
         }
@@ -271,6 +282,7 @@ namespace MuckSaveGame
                 var target = Nearest(key); string title = TitleFor(key);
                 if (target != null && target.Extra) title += "（概率掉落）";
                 else if (target != null && target.Pickup) title += "（可拾取）";
+                else if (target != null && target.Resource && target.Key.StartsWith("item:") && materials.TryGetValue(int.Parse(target.Key.Substring(5)), out var material) && material.name.Trim().Equals("Coal", StringComparison.OrdinalIgnoreCase)) title += "（煤炭石）";
                 UpdatePin(pins[index++], title, target != null ? target.Transform.position + Vector3.up * 2f : (Vector3?)null, false);
                 if (target == null) missing.Add(TitleFor(key));
             }

@@ -123,11 +123,13 @@ public class NavigationSmoke14 : BaseUnityPlugin
         var wood = ItemManager.Instance.GetItemByName("Wood"); var coal = ItemManager.Instance.GetItemByName("Coal");
         var fixture=new GameObject("Dormant nearest resource fixture"); fixture.SetActive(false); fixture.transform.position=PlayerMovement.Instance.transform.position;
         var rock=fixture.AddComponent<HitableRock>(); rock.maxHp=50;rock.dropItem=wood;rock.dropExtra=new[]{coal};rock.dropChance=new[]{1f};
+        rock.dropTable=ScriptableObject.CreateInstance<LootDrop>();
+        rock.dropTable.loot=new[]{new LootDrop.LootItems{item=wood,dropChance=1,amountMin=1,amountMax=1},new LootDrop.LootItems{item=coal,dropChance=0.5f,amountMin=1,amountMax=1}};
         Nav("ScanResources"); var nearest=typeof(Navigation).GetMethod("Nearest",BindingFlags.NonPublic|BindingFlags.Static);
         var found=nearest.Invoke(null,new object[]{"item:"+wood.id});
         Check(found!=null && ReferenceEquals(found.GetType().GetField("Resource").GetValue(found),rock), "unawakened culled nearest resource remains searchable");
-        var coalFound=nearest.Invoke(null,new object[]{"item:"+coal.id});
-        Check(coalFound!=null && (bool)coalFound.GetType().GetField("Extra").GetValue(coalFound), "coal secondary drop sources are indexed");
+        var resourceTargets=(System.Collections.IList)typeof(Navigation).GetField("targets",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);
+        Check(resourceTargets.Cast<object>().Any(t=>ReferenceEquals(t.GetType().GetField("Resource").GetValue(t),rock)&&(string)t.GetType().GetField("Key").GetValue(t)=="item:"+coal.id&&(bool)t.GetType().GetField("Extra").GetValue(t)), "coal secondary drop sources are indexed");
         typeof(Navigation).GetMethod("TrackAwake",BindingFlags.NonPublic|BindingFlags.Static).Invoke(null,new object[]{rock});
         rock.hp=0; Nav("ScanResources");found=nearest.Invoke(null,new object[]{"item:"+wood.id});
         Check(found==null || !ReferenceEquals(found.GetType().GetField("Resource").GetValue(found),rock), "depleted inactive resource is excluded");

@@ -45,8 +45,8 @@ public class CoalNavigationSmoke : BaseUnityPlugin
     private HitableRock Fixture(string name,Vector3 position,InventoryItem item,InventoryItem extra)
     {
         var go=new GameObject(name);go.SetActive(false);go.transform.position=position;
-        var r=go.AddComponent<HitableRock>();r.maxHp=100;r.dropItem=item;
-        if(extra){r.dropExtra=new[]{extra};r.dropChance=new[]{1f};}
+        var r=go.AddComponent<HitableRock>();r.maxHp=100;r.dropItem=item;r.dropTable=ScriptableObject.CreateInstance<LootDrop>();r.dropTable.loot=new[]{new LootDrop.LootItems{item=item,dropChance=1,amountMin=1,amountMax=1}};
+        if(extra){r.dropExtra=new[]{extra};r.dropChance=new[]{1f};r.dropTable.loot=r.dropTable.loot.Concat(new[]{new LootDrop.LootItems{item=extra,dropChance=0.5f,amountMin=1,amountMax=1}}).ToArray();}
         return r;
     }
     private void Test()
